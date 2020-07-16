@@ -23,7 +23,6 @@ minetest.register_globalstep(function(dtime)
 
 		-- controls head bone
 		local pitch = degrees(player:get_look_vertical()) * -1
-
 		player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch,0,0))
 
 		if mcl_playerplus_internal[name].jump_cooldown > 0 then
