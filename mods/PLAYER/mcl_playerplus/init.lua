@@ -7,8 +7,8 @@ local def = {}
 local time = 0
 
 -- converts yaw to degrees
-local degrees = function(yaw)
-	return(yaw*180.0/math.pi)
+local degrees = function(rad)
+	return(rad*180.0/math.pi)
 end
 
 
@@ -22,9 +22,9 @@ minetest.register_globalstep(function(dtime)
 		local name = player:get_player_name()
 
 		-- controls head bone
-		pitch = degrees(player:get_look_vertical()) * -1
-		yaw = degrees(player:get_look_horizontal())
-		player:set_bone_position("Head", vector.new(0,6.5,0), vector.new(pitch,0,0))
+		local pitch = degrees(player:get_look_vertical()) * -1
+
+		player:set_bone_position("Head", vector.new(0,6.3,0), vector.new(pitch,0,0))
 
 		if mcl_playerplus_internal[name].jump_cooldown > 0 then
 			mcl_playerplus_internal[name].jump_cooldown = mcl_playerplus_internal[name].jump_cooldown - dtime
