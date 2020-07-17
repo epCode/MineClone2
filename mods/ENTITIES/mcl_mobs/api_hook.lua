@@ -1,5 +1,5 @@
 local minetest = minetest
---class 
+--class
 mobs = {}
 
 local path = minetest.get_modpath(minetest.get_current_modname()).."/api/"
@@ -10,7 +10,7 @@ dofile(path.."head_code.lua")
 dofile(path.."animation.lua")
 dofile(path.."timers.lua")
 
-mobs.register_mob = function(def)
+mcl_mobs.register_mob = function(def)
 
 
 
@@ -43,7 +43,7 @@ mob_register.jump_timer = 0
 
 if def.head_bone then
 	mob_register.head_bone = def.head_bone
-	mobs.create_head_functions(def,mob_register)
+	mcl_mobs.create_head_functions(def,mob_register)
 	mob_register.debug_head_pos = def.debug_head_pos
 	mob_register.head_directional_offset = def.head_directional_offset
 	mob_register.head_height_offset = def.head_height_offset
@@ -165,23 +165,23 @@ if def.custom_timer then
 	mob_register.custom_timer_function = def.custom_timer_function
 end
 
-mobs.create_movement_functions(def,mob_register)
-mobs.create_interaction_functions(def,mob_register)
-mobs.create_data_handling_functions(def,mob_register)
-mobs.create_animation_functions(def,mob_register)
-mobs.create_timer_functions(def,mob_register)
+mcl_mobs.create_movement_functions(def,mob_register)
+mcl_mobs.create_interaction_functions(def,mob_register)
+mcl_mobs.create_data_handling_functions(def,mob_register)
+mcl_mobs.create_animation_functions(def,mob_register)
+mcl_mobs.create_timer_functions(def,mob_register)
 
 
 mob_register.on_step = function(self, dtime,moveresult)
 	if self.custom_function_begin then
 		self.custom_function_begin(self,dtime)
 	end
-	
+
 	self.collision_detection(self)
 	if self.fall_damage then
 		self.fall_damage(self)
 	end
-	
+
 	if self.dead == false and self.death_animation_timer == 0 then
 		if self.do_custom_timer then
 			self.do_custom_timer(self,dtime)
@@ -192,7 +192,7 @@ mob_register.on_step = function(self, dtime,moveresult)
 		end
 
 		self.move(self,dtime,moveresult)
-		
+
 		self.flow(self)
 		--self.debug_nametag(self,dtime)
 
@@ -205,11 +205,11 @@ mob_register.on_step = function(self, dtime,moveresult)
 		if self.set_animation then
 			self.set_animation(self)
 		end
-		
+
 		if self.look_around then
 			self.look_around(self,dtime)
 		end
-		
+
 		if self.pathfinding then
 			self.pathfinding(self,dtime)
 		end
@@ -230,15 +230,15 @@ mob_register.on_step = function(self, dtime,moveresult)
 	if self.dead == true and self.death_animation_timer <= 0 then
 		self.on_death(self)
 	end
-	
+
 	if self.tnt_timer then
 		self.manage_explode_timer(self,dtime)
 	end
-	
+
 	if self.projectile_timer then
 		self.manage_projectile_timer(self,dtime)
 	end
-	
+
 	if self.custom_function_end then
 		self.custom_function_end(self,dtime)
 	end
