@@ -25,7 +25,7 @@ local carpets = {
 }
 
 mobs:register_mob("mobs_mc:llama", {
-	type = "animal",
+	type = "monster",
 	spawn_class = "passive",
 	hp_min = 15,
 	hp_max = 30,
@@ -54,7 +54,8 @@ mobs:register_mob("mobs_mc:llama", {
 		{name = mobs_mc.items.leather,
 		chance = 1,
 		min = 0,
-		max = 2,},
+		max = 2,
+		looting = "common",},
 	},
 	fear_height = 4,
 	sounds = {
@@ -83,8 +84,11 @@ mobs:register_mob("mobs_mc:llama", {
 	},
 	follow = mobs_mc.follow.llama,
 	view_range = 16,
+	attack_type = "dogshoot",
+	arrow = "mobs_mc:llama_spit",
+	shoot_interval = 1.5,
+	shoot_offset = .5,
 	do_custom = function(self, dtime)
-
 		-- set needed values if not already present
 		if not self.v2 then
 			self.v2 = 0
@@ -214,6 +218,32 @@ mobs:register_mob("mobs_mc:llama", {
 	]]
 
 })
+
+mobs:register_arrow("mobs_mc:llama_spit", {
+	visual = "sprite",
+	visual_size = {x = 0.3, y = 0.3},
+	textures = {"mobs_mc_spit.png"},
+	velocity = 30,
+
+	-- Direct hit, no fire... just plenty of pain
+	hit_player = function(self, player)
+		if rawget(_G, "armor") and armor.last_damage_types then
+			armor.last_damage_types[player:get_player_name()] = "llama_spit"
+		end
+		player:punch(self.object, 1.0, {
+			full_punch_interval = 1.0,
+			damage_groups = {fleshy = 1, knockback = 10},
+		}, nil)
+	end,
+
+	hit_mob = function(self, mob)
+		mob:punch(self.object, 1.0, {
+			full_punch_interval = 1.0,
+			damage_groups = {fleshy = 1, knockback = 10},
+		}, nil)
+	end,
+})
+
 
 --spawn
 mobs:spawn_specific("mobs_mc:llama", mobs_mc.spawn.savanna, {"air"}, 0, minetest.LIGHT_MAX+1, 30, 15000, 5, mobs_mc.spawn_height.water+15, mobs_mc.spawn_height.overworld_max)

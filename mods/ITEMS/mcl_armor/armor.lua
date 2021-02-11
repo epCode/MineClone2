@@ -94,19 +94,19 @@ armor.def = {
 }
 
 armor.update_player_visuals = function(self, player)
-	
-	local player_holding = player:get_wielded_item():get_name()
-	if string.find(player_holding,"mcl_tools:") or player_holding == "mcl_mobitems:bone" or player_holding == "mcl_fishing:fishing_rod" then
-	  player:set_bone_position("Wield_Item", vector.new(0,3.9,1.3), vector.new(90,0,0))
-	elseif string.find(player_holding, "mcl_bows:bow") then
-	  player:set_bone_position("Wield_Item", vector.new(.5,4.5,-1.6), vector.new(90,0,20))
-	else
-	  player:set_bone_position("Wield_Item", vector.new(-1.5,4.9,1.8), vector.new(135,0,90))
-	end
-
 	if not player then
 		return
 	end
+
+	local player_holding = player:get_wielded_item():get_name()
+	if string.find(player_holding,"mcl_tools:") or player_holding == "mcl_mobitems:bone" or player_holding == "mcl_fishing:fishing_rod" then
+		player:set_bone_position("Wield_Item", vector.new(0,3.9,1.3), vector.new(90,0,0))
+	elseif string.find(player_holding, "mcl_bows:bow") then
+		 player:set_bone_position("Wield_Item", vector.new(.5,4.5,-1.6), vector.new(90,0,20))
+	else
+		player:set_bone_position("Wield_Item", vector.new(-1.5,4.9,1.8), vector.new(135,0,90))
+	end
+
 	local name = player:get_player_name()
 	if self.textures[name] then
 		mcl_player.player_set_textures(player, {
@@ -355,6 +355,14 @@ mcl_player.player_register_model("mcl_armor_character.b3d", {
 		mine = {x=189, y=198},
 		walk_mine = {x=200, y=219},
 		sit = {x=81, y=160},
+		sneak_stand = {x=222, y=302},
+		sneak_mine = {x=346, y=366},
+		sneak_walk = {x=304, y=323},
+		sneak_walk_mine = {x=325, y=344},
+		swim_walk = {x=368, y=387},
+		swim_walk_mine = {x=389, y=408},
+		swim_stand = {x=434, y=434},
+		swim_mine = {x=411, y=430},
 	},
 })
 
@@ -510,12 +518,12 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 	if name and hp_change < 0 then
 		local damage_type = armor.last_damage_types[name]
 		armor.last_damage_types[name] = nil
-		
+
 		-- Armor doesn't protect from set_hp (commands like /kill),
 		if reason.type == "set_hp" then
 			return hp_change
 		end
-		
+
 		local regular_reduction = reason.type ~= "drown" and reason.type ~= "fall"
 
 		-- Account for potion effects (armor doesn't save the target)
@@ -526,7 +534,7 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 		local heal_max = 0
 		local items = 0
 		local armor_damage = math.max(1, math.floor(math.abs(hp_change)/4))
-		
+
 		local total_points = 0
 		local total_toughness = 0
 		local epf = 0
@@ -540,7 +548,7 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 				local tough = stack:get_definition().groups["mcl_armor_toughness"] or 0
 				total_points = total_points + pts
 				total_toughness = total_toughness + tough
-				
+
 				local protection_level = enchantments.protection or 0
 				if protection_level > 0 then
 					epf = epf + protection_level * 1
@@ -550,7 +558,7 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 					epf = epf + blast_protection_level * 2
 				end
 				local fire_protection_level = enchantments.fire_protection or 0
-				if fire_protection_level > 0 and (damage_type == "fireball" or reason.type == "node_damage" and
+				if fire_protection_level > 0 and (damage_type == "burning" or damage_type == "fireball" or reason.type == "node_damage" and
 					(reason.node == "mcl_fire:fire" or reason.node == "mcl_core:lava_source" or reason.node == "mcl_core:lava_flowing")) then
 					epf = epf + fire_protection_level * 2
 				end
@@ -562,7 +570,7 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 				if feather_falling_level and reason.type == "fall" then
 					epf = epf + feather_falling_level * 3
 				end
-				
+
 				local did_thorns_damage = false
 				local thorns_level = enchantments.thorns or 0
 				if thorns_level then
@@ -576,7 +584,7 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 						did_thorns_damage = true
 					end
 				end
-				
+
 				-- Damage armor
 				local use = stack:get_definition().groups["mcl_armor_uses"] or 0
 				if use > 0 and regular_reduction then
@@ -602,14 +610,14 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 			end
 		end
 		local damage = math.abs(hp_change)
-		
+
 		if regular_reduction then
 			-- Damage calculation formula (from <https://minecraft.gamepedia.com/Armor#Damage_protection>)
 			damage = damage * (1 - math.min(20, math.max((total_points/5), total_points - damage / (2+(total_toughness/4)))) / 25)
 		end
 		damage = damage * (1 - (math.min(20, epf) / 25))
-		damage = math.floor(damage+0.5)		
-		
+		damage = math.floor(damage+0.5)
+
 		if reason.type == "punch" and thorns_damage > 0 then
 			local obj = reason.object
 			if obj then
@@ -626,7 +634,7 @@ minetest.register_on_player_hpchange(function(player, hp_change, reason)
 				})
 			end
 		end
-		
+
 		hp_change = -math.abs(damage)
 
 		armor.def[name].count = items

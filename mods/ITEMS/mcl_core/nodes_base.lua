@@ -182,6 +182,7 @@ minetest.register_node("mcl_core:stone_with_lapis", {
 	sounds = mcl_sounds.node_sound_stone_defaults(),
 	_mcl_blast_resistance = 3,
 	_mcl_hardness = 3,
+	_mcl_silk_touch_drop = true,
 	_mcl_fortune_drop = mcl_core.fortune_drop_ore,
 })
 
@@ -380,7 +381,7 @@ minetest.register_node("mcl_core:dirt_with_grass", {
 	_mcl_hardness = 0.6,
 	_mcl_silk_touch_drop = true,
 })
-mcl_core.register_snowed_node("mcl_core:dirt_with_grass_snow", "mcl_core:dirt_with_grass", nil, nil, true)
+mcl_core.register_snowed_node("mcl_core:dirt_with_grass_snow", "mcl_core:dirt_with_grass", nil, nil, true, S("Dirt with Snow"))
 
 minetest.register_node("mcl_core:grass_path", {
 	tiles = {"mcl_core_grass_path_top.png", "default_dirt.png", "mcl_core_grass_path_side.png"},
@@ -424,7 +425,7 @@ minetest.register_node("mcl_core:mycelium", {
 	_mcl_hardness = 0.6,
 	_mcl_silk_touch_drop = true,
 })
-mcl_core.register_snowed_node("mcl_core:mycelium_snow", "mcl_core:mycelium")
+mcl_core.register_snowed_node("mcl_core:mycelium_snow", "mcl_core:mycelium", nil, nil, false, S("Mycelium with Snow"))
 
 minetest.register_node("mcl_core:podzol", {
 	description = S("Podzol"),
@@ -441,7 +442,7 @@ minetest.register_node("mcl_core:podzol", {
 	_mcl_hardness = 0.6,
 	_mcl_silk_touch_drop = true,
 })
-mcl_core.register_snowed_node("mcl_core:podzol_snow", "mcl_core:podzol")
+mcl_core.register_snowed_node("mcl_core:podzol_snow", "mcl_core:podzol", nil, nil, false, S("Podzol with Snow"))
 
 minetest.register_node("mcl_core:dirt", {
 	description = S("Dirt"),
@@ -503,7 +504,7 @@ minetest.register_node("mcl_core:gravel", {
 				{items = {'mcl_core:gravel'}}
 			}
 		},
-		[3] = "mcl_core:flint"
+		[3] = "mcl_core:flint",
 	},
 })
 
@@ -821,7 +822,7 @@ minetest.register_node("mcl_core:ice", {
 	paramtype = "light",
 	use_texture_alpha = translucent_ice,
 	stack_max = 64,
-	groups = {handy=1,pickaxey=1, slippery=3, building_block=1},
+	groups = {handy=1,pickaxey=1, slippery=3, building_block=1, ice=1},
 	drop = "",
 	sounds = mcl_sounds.node_sound_glass_defaults(),
 	node_dig_prediction = "mcl_core:water_source",
@@ -839,7 +840,7 @@ minetest.register_node("mcl_core:packed_ice", {
 	tiles = {"mcl_core_ice_packed.png"},
 	is_ground_content = true,
 	stack_max = 64,
-	groups = {handy=1,pickaxey=1, slippery=3, building_block=1},
+	groups = {handy=1,pickaxey=1, slippery=3, building_block=1, ice=1},
 	drop = "",
 	sounds = mcl_sounds.node_sound_glass_defaults(),
 	_mcl_blast_resistance = 0.5,
@@ -887,7 +888,7 @@ for i=0,3 do
 		paramtype = "light",
 		use_texture_alpha = translucent_ice,
 		stack_max = 64,
-		groups = {handy=1, frosted_ice=1, slippery=3, not_in_creative_inventory=1},
+		groups = {handy=1, frosted_ice=1, slippery=3, not_in_creative_inventory=1, ice=1},
 		drop = "",
 		sounds = mcl_sounds.node_sound_glass_defaults(),
 		on_construct = function(pos)
@@ -924,7 +925,7 @@ for i=1,8 do
 		desc = S("Top Snow")
 		tt_help = S("Stackable")
 		longdesc = S("Top snow is a layer of snow. It melts near light sources other than the sun with a light level of 12 or higher.").."\n"..S("Top snow can be stacked and has one of 8 different height levels. At levels 2-8, top snow is collidable. Top snow drops 2-9 snowballs, depending on its height.")
-		usagehelp = S("This block can only be placed on full solid blocks and on another top snow (which increases its height).") 
+		usagehelp = S("This block can only be placed on full solid blocks and on another top snow (which increases its height).")
 		walkable = false
 	else
 		id = "mcl_core:snow_"..i
@@ -1028,7 +1029,7 @@ for i=1,8 do
 		drop = "mcl_throwing:snowball "..(i+1),
 		_mcl_blast_resistance = 0.1,
 		_mcl_hardness = 0.1,
-		_mcl_silk_touch_drop = true,
+		_mcl_silk_touch_drop = {"mcl_core:snow " .. (i+1)},
 	})
 end
 

@@ -21,12 +21,16 @@ mcl_player.player_register_model("character.b3d", {
 	textures = {"character.png", },
 	animations = {
 		-- Standard animations.
-		stand     = { x=  0, y= 79, },
-		lay       = { x=162, y=166, },
-		walk      = { x=168, y=187, },
-		mine      = { x=189, y=198, },
-		walk_mine = { x=200, y=219, },
-		sit       = { x= 81, y=160, },
+		stand		= {x=  0, y= 79},
+		lay		= {x=162, y=166},
+		walk		= {x=168, y=187},
+		mine		= {x=189, y=198},
+		walk_mine	= {x=200, y=219},
+		sit		= {x= 81, y=160},
+		sneak_stand	= {x=222, y=302},
+		sneak_mine	= {x=346, y=366},
+		sneak_walk	= {x=304, y=323},
+		sneak_walk_mine	= {x=325, y=344},
 	},
 })
 
@@ -59,6 +63,7 @@ function mcl_player.player_set_model(player, model_name)
 			textures = player_textures[name] or model.textures,
 			visual = "mesh",
 			visual_size = model.visual_size or {x=1, y=1},
+			damage_texture_modifier = "^[colorize:red:130",
 		})
 		mcl_player.player_set_animation(player, "stand")
 	else
@@ -88,6 +93,13 @@ function mcl_player.player_get_preview(player)
 	end
 end
 
+function mcl_player.get_player_formspec_model(player, x, y, w, h, fsname)
+	local name = player:get_player_name()
+	local model = player_model[name]
+	local anim = models[model].animations[player_anim[name]]
+	return "model[" .. x .. "," .. y .. ";" .. w .. "," .. h .. ";" .. fsname .. ";" .. model .. ";" .. table.concat(player_textures[name], ",") .. ";0," .. 180 .. ";false;false;" .. anim.x .. "," .. anim.y .. "]"
+end
+
 function mcl_player.player_set_animation(player, anim_name, speed)
 	local name = player:get_player_name()
 	if player_anim[name] == anim_name then
@@ -106,7 +118,7 @@ end
 minetest.register_on_joinplayer(function(player)
 	mcl_player.player_attached[player:get_player_name()] = false
 	mcl_player.player_set_model(player, "character.b3d")
-	player:set_local_animation({x=0, y=79}, {x=168, y=187}, {x=189, y=198}, {x=200, y=219}, 30)
+	--player:set_local_animation({x=0, y=79}, {x=168, y=187}, {x=189, y=198}, {x=200, y=219}, 30)
 	player:set_fov(86.1) -- see <https://minecraft.gamepedia.com/Options#Video_settings>>>>
 end)
 
@@ -142,6 +154,9 @@ minetest.register_globalstep(function(dtime)
 				animation_speed_mod = animation_speed_mod / 2
 			end
 
+			-- ask if player is swiming
+			local standing_on_water = minetest.get_item_group(mcl_playerinfo[name].node_stand, "water") ~= 0
+
 			-- Apply animations based on what the player is doing
 			if player:get_hp() == 0 then
 				player_set_animation(player, "lay")
@@ -150,16 +165,66 @@ minetest.register_globalstep(function(dtime)
 					player_anim[name] = nil
 					player_sneak[name] = controls.sneak
 				end
-				if controls.LMB then
+				if controls.LMB and not controls.sneak and standing_on_water then
+					player_set_animation(player, "swim_walk_mine", animation_speed_mod)
+				elseif not controls.sneak and standing_on_water then
+					player_set_animation(player, "swim_walk", animation_speed_mod)
+				elseif controls.LMB and not controls.sneak and not standing_on_water then
 					player_set_animation(player, "walk_mine", animation_speed_mod)
-				else
+				elseif controls.LMB and controls.sneak and not standing_on_water then
+					player_set_animation(player, "sneak_walk_mine", animation_speed_mod)
+				elseif not controls.sneak and not standing_on_water then
 					player_set_animation(player, "walk", animation_speed_mod)
+				else
+					player_set_animation(player, "sneak_walk", animation_speed_mod)
 				end
-			elseif controls.LMB then
+			elseif controls.LMB and not controls.sneak and standing_on_water then
+				player_set_animation(player, "swim_mine")
+			elseif controls.LMB and not controls.sneak and not standing_on_water then
 				player_set_animation(player, "mine")
-			else
+			elseif controls.LMB and controls.sneak then
+				player_set_animation(player, "sneak_mine")
+			elseif not controls.sneak and standing_on_water then
+				player_set_animation(player, "swim_stand", animation_speed_mod)
+			elseif not controls.sneak and not standing_on_water then
 				player_set_animation(player, "stand", animation_speed_mod)
+			else
+				player_set_animation(player, "sneak_stand", animation_speed_mod)
 			end
 		end
 	end
 end)
+
+-- Don't change HP if the player falls in the water or through End Portal:
+minetest.register_on_player_hpchange(function(player, hp_change, reason)
+	if reason and reason.type == "fall" and player then
+		local pos = player:get_pos()
+		local node = minetest.get_node(pos)
+		local velocity = player:get_velocity() or player:get_player_velocity() or {x=0,y=-10,z=0}
+		local v_axis_max = math.max(math.abs(velocity.x), math.abs(velocity.y), math.abs(velocity.z))
+		local step = {x = velocity.x / v_axis_max, y = velocity.y / v_axis_max, z = velocity.z / v_axis_max}
+		for i = 1, math.ceil(v_axis_max/5)+1 do -- trace at least 1/5 of the way per second
+			if not node or node.name == "ignore" then
+				minetest.get_voxel_manip():read_from_map(pos, pos)
+				node = minetest.get_node(pos)
+			end
+			if node then
+				if minetest.registered_nodes[node.name].walkable then
+					return hp_change
+				end
+				if minetest.get_item_group(node.name, "water") ~= 0 then
+					return 0
+				end
+				if node.name == "mcl_portals:portal_end" then
+					if mcl_portals and mcl_portals.end_teleport then
+						mcl_portals.end_teleport(player)
+					end
+					return 0
+				end
+			end
+			pos = vector.add(pos, step)
+			node = minetest.get_node(pos)
+		end
+	end
+	return hp_change
+end, true)

@@ -64,22 +64,27 @@ local function set_inventory(player, armor_change_only)
 	local player_name = player:get_player_name()
 
 	-- Show armor and player image
-	local img, img_player
-	if mod_player then
-		img_player = mcl_player.player_get_preview(player)
+	local player_preview
+	if minetest.settings:get_bool("3d_player_preview", true) then
+		player_preview = mcl_player.get_player_formspec_model(player, 1.0, 0.0, 2.25, 4.5, "")
 	else
-		img_player = "player.png"
-	end
-	img = img_player
-	local player_preview = "image[0.6,0.2;2,4;"..img.."]"
-	if show_armor and armor.textures[player_name] and armor.textures[player_name].preview then
-		img = armor.textures[player_name].preview
-		local s1 = img:find("character_preview")
-		if s1 ~= nil then
-			s1 = img:sub(s1+21)
-			img = img_player..s1
+		local img, img_player
+		if mod_player then
+			img_player = mcl_player.player_get_preview(player)
+		else
+			img_player = "player.png"
 		end
-		player_preview = "image[1.1,0.2;2,4;"..img.."]"
+		img = img_player
+		player_preview = "image[0.6,0.2;2,4;"..img.."]"
+		if show_armor and armor.textures[player_name] and armor.textures[player_name].preview then
+			img = armor.textures[player_name].preview
+			local s1 = img:find("character_preview")
+			if s1 ~= nil then
+				s1 = img:sub(s1+21)
+				img = img_player..s1
+			end
+			player_preview = "image[1.1,0.2;2,4;"..img.."]"
+		end
 	end
 
 	local armor_slots = {"helmet", "chestplate", "leggings", "boots"}
@@ -141,7 +146,6 @@ minetest.register_on_player_receive_fields(function(player, formname, fields)
 		return_fields(player,"craft")
 		return_fields(player,"enchanting_lapis")
 		return_fields(player,"enchanting_item")
-		mcl_enchanting.reload_inventory(player)
 		if not minetest.is_creative_enabled(player:get_player_name()) and (formname == "" or formname == "main") then
 			set_inventory(player)
 		end
